@@ -1,0 +1,16 @@
+{
+  "name": "hemans-calc",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@capacitor-community/speech-recognition": "^7.0.0",
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@fontsource/outfit": "^5.0.0",
+    "@fontsource/poppins": "^5.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5"
+  }
+}

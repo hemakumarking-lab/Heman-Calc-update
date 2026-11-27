@@ -319,24 +319,31 @@ function voiceParse(raw){
  if(rate!==null)e=e.replace(/[+\-*/^]+$/,'');
  return{e,rate,sign}}
 
+let vBF=false;
+function vStartUtt(){if(vBase===null){vBase=expr;vBF=fresh}}
 function applyVoice(raw,live){
  const r=voiceParse(raw);
- if(r.cmd){if(live)return;press(r.cmd);toast('\u201c'+raw+'\u201d');return}
- const bx=vBase!==null?vBase:expr;
+ if(r.cmd){if(live)return;press(r.cmd);vBase=null;toast('\u201c'+raw+'\u201d');return}
+ const bx=vBase!==null?vBase:expr,bf=vBase!==null?vBF:fresh;
  let e=r.e;
  if(!e&&r.rate===null){if(!live)toast('Could not understand: '+raw);return}
  if(!e)e=bx;
- else if(/^[+*/^]/.test(e)&&bx)e=bx+e;
- else if(/^-/.test(e)&&bx&&r.rate===null)e=bx+e;
+ else if(bx){
+  if(/^[+*/^]/.test(e)||(/^-/.test(e)&&r.rate===null))e=bx.replace(/[+\-*/^]+$/,'')+e;
+  else if(!bf)e=/[+\-*/^(]$/.test(bx)?bx+e:bx+'+'+e}
  if(isNaN(ev(e))){if(!live)toast('Could not read: '+raw);return}
  expr=e;fresh=false;
  if(r.rate!==null){S.mode={s:r.sign,r:r.rate};gst=true;if(!live){save();pushH()}}else gst=false;
  render();if(!live)toast('\u201c'+raw+'\u201d')}
-let vOn=false,vLast='',vRc=null,vBase=null;
+let vOn=false,vLast='',vRc=null,vBase=null,vTimer=null,vBusy=false;
 const vOpts={language:'en-IN',maxResults:1,partialResults:true,popup:false};
 const vCap=()=>window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.SpeechRecognition;
 function vBtn(on){const b=document.querySelector('[data-act="mic"]');if(b)b.classList.toggle('rec',on)}
-async function voiceStop(msg){const CP=vCap();vOn=false;vBtn(false);vLast='';vBase=null;try{if(vRc){vRc.stop();vRc=null}}catch(e){}try{if(CP){await CP.stop();await CP.removeAllListeners()}}catch(e){}if(msg)toast(msg)}
+async function vKick(){if(!vOn||vBusy)return;const CP=vCap();if(!CP)return;vBusy=true;
+ try{let l=false;try{const st=await CP.isListening();l=!!(st&&st.listening)}catch(e){}
+  if(vOn&&!l)await Promise.race([CP.start(vOpts),new Promise(r=>setTimeout(r,2000))])}catch(e){}
+ vBusy=false}
+async function voiceStop(msg){const CP=vCap();vOn=false;clearInterval(vTimer);vBtn(false);vLast='';vBase=null;try{if(vRc){vRc.stop();vRc=null}}catch(e){}try{if(CP){await CP.stop();await CP.removeAllListeners()}}catch(e){}if(msg)toast(msg)}
 async function voice(){
  if(vOn){voiceStop('Mic off');return}
  const CP=vCap();
@@ -345,19 +352,19 @@ async function voice(){
    const av=await CP.available();if(!av.available){toast('Voice input is not available on this phone');return}
    let p=await CP.checkPermissions();if(p.speechRecognition!=='granted'){p=await CP.requestPermissions();if(p.speechRecognition!=='granted'){toast('Microphone is blocked. Open phone Settings > Apps > Heman\u2019s Calc > Permissions and allow Microphone.',5000);return}}
    await CP.removeAllListeners();
-   await CP.addListener('partialResults',d=>{if(d&&d.matches&&d.matches[0]){vLast=d.matches[0];if(vBase===null)vBase=expr;applyVoice(vLast,true)}});
-   await CP.addListener('listeningState',d=>{if(d&&d.status==='stopped'){if(vLast){const t=vLast;vLast='';applyVoice(t);vBase=null}if(vOn)setTimeout(()=>{if(vOn)CP.start(vOpts).catch(()=>{})},300)}});
-   vOn=true;vBtn(true);toast('Listening\u2026 tap the mic again to stop',2500);
-   await CP.start(vOpts)
+   await CP.addListener('partialResults',d=>{if(d&&d.matches&&d.matches[0]){vLast=d.matches[0];vStartUtt();applyVoice(vLast,true)}});
+   await CP.addListener('listeningState',d=>{if(d&&d.status==='stopped'){if(vLast){const t=vLast;vLast='';applyVoice(t);vBase=null}if(vOn)setTimeout(vKick,250)}});
+   vOn=true;vBusy=false;vBtn(true);toast('Listening\u2026 tap the mic again to stop',2500);
+   clearInterval(vTimer);vTimer=setInterval(vKick,700);vKick()
   }else{
    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
    if(!SR){const nat=window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform();toast(nat?'Voice plug-in missing. Update package.json and android.yml in GitHub, then rebuild.':'Voice input is not supported in this browser',5000);return}
    const rc=new SR();vRc=rc;rc.lang='en-IN';rc.continuous=true;rc.interimResults=true;
-   rc.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++){const q=e.results[i],tx=q[0].transcript;if(q.isFinal){applyVoice(tx);vBase=null}else{if(vBase===null)vBase=expr;applyVoice(tx,true)}}};
+   rc.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++){const q=e.results[i],tx=q[0].transcript;if(q.isFinal){applyVoice(tx);vBase=null}else{vStartUtt();applyVoice(tx,true)}}};
    rc.onerror=e=>{if(e.error==='no-speech'||e.error==='aborted')return;vOn=false;vBtn(false);toast(e.error==='not-allowed'?'Microphone is blocked. Allow it in phone Settings > Apps > Permissions.':'Voice error: '+e.error,4000)};
-   rc.onend=()=>{if(vOn&&vRc===rc){try{rc.start()}catch(x){vOn=false;vBtn(false)}}else vBtn(false)};
+   rc.onend=()=>{if(vOn&&vRc===rc){setTimeout(()=>{if(vOn&&vRc===rc){try{rc.start()}catch(x){}}},200)}else vBtn(false)};
    vOn=true;vBtn(true);toast('Listening\u2026 tap the mic again to stop',2500);rc.start()}
- }catch(err){vOn=false;vBtn(false);toast('Voice input failed')}}
+ }catch(err){vOn=false;clearInterval(vTimer);vBtn(false);toast('Voice input failed')}}
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&vOn)voiceStop()});
 document.querySelectorAll('.bar [data-act]').forEach(b=>{const src={share:'share',settings:'gear',history:'hist'}[b.dataset.act];if(!src)return;b.innerHTML=$(src).innerHTML});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;buzz(10);const a=b.dataset.act,land=matchMedia('(orientation:landscape) and (max-height:600px)').matches;

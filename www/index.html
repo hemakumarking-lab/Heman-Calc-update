@@ -314,24 +314,33 @@ function applyVoice(raw){
  expr=e;fresh=false;
  if(r.rate!==null){S.mode={s:r.sign,r:r.rate};save();gst=true;pushH()}
  render();toast('\u201c'+raw+'\u201d')}
+let vOn=false,vLast='',vRc=null;
+const vOpts={language:'en-IN',maxResults:1,partialResults:true,popup:false};
+const vCap=()=>window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.SpeechRecognition;
+function vBtn(on){const b=document.querySelector('[data-act="mic"]');if(b)b.classList.toggle('rec',on)}
+async function voiceStop(msg){const CP=vCap();vOn=false;vBtn(false);vLast='';try{if(vRc){vRc.stop();vRc=null}}catch(e){}try{if(CP){await CP.stop();await CP.removeAllListeners()}}catch(e){}if(msg)toast(msg)}
 async function voice(){
- const btn=document.querySelector('[data-act="mic"]');const CP=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.SpeechRecognition;
+ if(vOn){voiceStop('Mic off');return}
+ const CP=vCap();
  try{
   if(CP){
    const av=await CP.available();if(!av.available){toast('Voice input is not available on this phone');return}
-   let p=await CP.checkPermissions();if(p.speechRecognition!=='granted'){p=await CP.requestPermissions();if(p.speechRecognition!=='granted'){toast('Microphone is blocked. Open phone Settings > Apps > Heman’s Calc > Permissions and allow Microphone.',5000);return}}
-   btn.classList.add('rec');
-   const res=await CP.start({language:'en-IN',maxResults:3,prompt:'Say an amount, e.g. 1000 plus 18 percent GST',partialResults:false,popup:true});
-   btn.classList.remove('rec');
-   const m=res&&res.matches&&res.matches[0];if(m)applyVoice(m);else toast('Nothing heard')
+   let p=await CP.checkPermissions();if(p.speechRecognition!=='granted'){p=await CP.requestPermissions();if(p.speechRecognition!=='granted'){toast('Microphone is blocked. Open phone Settings > Apps > Heman\u2019s Calc > Permissions and allow Microphone.',5000);return}}
+   await CP.removeAllListeners();
+   await CP.addListener('partialResults',d=>{if(d&&d.matches&&d.matches[0])vLast=d.matches[0]});
+   await CP.addListener('listeningState',d=>{if(d&&d.status==='stopped'){if(vLast){const t=vLast;vLast='';applyVoice(t)}if(vOn)setTimeout(()=>{if(vOn)CP.start(vOpts).catch(()=>{})},300)}});
+   vOn=true;vBtn(true);toast('Listening\u2026 tap the mic again to stop',2500);
+   await CP.start(vOpts)
   }else{
    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
    if(!SR){const nat=window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform();toast(nat?'Voice plug-in missing. Update package.json and android.yml in GitHub, then rebuild.':'Voice input is not supported in this browser',5000);return}
-   const rc=new SR();rc.lang='en-IN';rc.interimResults=false;rc.maxAlternatives=1;btn.classList.add('rec');toast('Listening\u2026');
-   rc.onresult=e=>applyVoice(e.results[0][0].transcript);
-   rc.onerror=e=>toast(e.error==='not-allowed'?'Microphone is blocked. Allow it in phone Settings > Apps > Permissions.':'Voice error: '+e.error,4000);
-   rc.onend=()=>btn.classList.remove('rec');rc.start()}
- }catch(err){if(btn)btn.classList.remove('rec');toast('Voice input failed')}}
+   const rc=new SR();vRc=rc;rc.lang='en-IN';rc.continuous=true;rc.interimResults=false;
+   rc.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)applyVoice(e.results[i][0].transcript)};
+   rc.onerror=e=>{if(e.error==='no-speech'||e.error==='aborted')return;vOn=false;vBtn(false);toast(e.error==='not-allowed'?'Microphone is blocked. Allow it in phone Settings > Apps > Permissions.':'Voice error: '+e.error,4000)};
+   rc.onend=()=>{if(vOn&&vRc===rc){try{rc.start()}catch(x){vOn=false;vBtn(false)}}else vBtn(false)};
+   vOn=true;vBtn(true);toast('Listening\u2026 tap the mic again to stop',2500);rc.start()}
+ }catch(err){vOn=false;vBtn(false);toast('Voice input failed')}}
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&vOn)voiceStop()});
 document.querySelectorAll('.bar [data-act]').forEach(b=>{const src={share:'share',settings:'gear',history:'hist'}[b.dataset.act];if(!src)return;b.innerHTML=$(src).innerHTML});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;buzz(10);const a=b.dataset.act,land=matchMedia('(orientation:landscape) and (max-height:600px)').matches;
  if(a==='settings')settings();

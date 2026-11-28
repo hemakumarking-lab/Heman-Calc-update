@@ -295,12 +295,19 @@ function spoken(t){const out=[];let act=false,tot=0,cur=0;const fl=()=>{if(act){
   if(has(SW,w)){act=true;if(w==='hundred')cur=(cur||1)*100;else{tot+=(cur||1)*SW[w];cur=0}continue}
   fl();out.push(w)}
  fl();return out.join(' ')}
+const OPW=['plus','minus','times','into','over','add','less','percent','percentage','gst','x','power','point','multiply','divide','divided','multiplied','by','open','close','bracket','of','to','from','and','with','without','inclusive','exclude','excluding','remove','reverse','subtract','negative','equal','equals'];
+const HOMO={won:'one',too:'two',tu:'two',ate:'eight',fore:'four',tree:'three'};
+function knownW(w){return has(UW,w)||has(SW,w)||OPW.includes(w)||/^\d+(\.\d+)?$/.test(w)}
+function splitW(w){if(knownW(w))return[w];for(let i=w.length-1;i>0;i--){const a=w.slice(0,i);if(knownW(a)){const r=splitW(w.slice(i));if(r)return[a,...r]}}return null}
+function glue(c){return c.split(/\s+/).filter(Boolean).map(w=>{const m=w.match(/^(\d+(?:\.\d+)?)([a-z]+)$/);if(m){const r=splitW(m[2]);return r?[m[1],...r].join(' '):w}if(has(HOMO,w))return HOMO[w];if(/^[a-z]+$/.test(w)&&!knownW(w)){const r=splitW(w);return r?r.join(' '):w}return w}).join(' ')}
+function fixV(c){return c.replace(/\bg\.?\s?s\.?\s?[td]\b/g,'gst').replace(/\b(jst|gest|just)\b(?=\s*\d|\s*$)/g,'gst').replace(/\b(minors?|miners|mynus)\b/g,'minus').replace(/\b(pluss|plas)\b/g,'plus').replace(/(\d)\s+time\b/g,'$1 times').replace(/\b(\d+|plus|minus|times|into|over|by)\s+for\b/g,'$1 four').replace(/\bfor\s+(plus|minus|times|into|over|by)\b/g,'four $1')}
+function pickBest(a){for(const m of a){const r=voiceParse(m);if(r.cmd||r.e||r.rate!==null)return m}return a[0]}
 function voiceParse(raw){
  const c=raw.trim().toLowerCase().replace(/[.!]+$/,'');
  if(/^(clear|all clear|reset|cancel)$/.test(c))return{cmd:'AC'};
  if(/^(delete|backspace|back|undo)$/.test(c))return{cmd:'\u232b'};
  if(/^(equals?|calculate|result|answer|total)$/.test(c))return{cmd:'='};
- let t=' '+c.replace(/(\d),(?=\d{3})/g,'$1').replace(/[\u20b9$]/g,' ')
+ let t=' '+fixV(glue(c)).replace(/(\d),(?=\d{3})/g,'$1').replace(/[\u20b9$]/g,' ')
   .replace(/\b(to the power of|raised to the power|raised to|power)\b/g,' ^ ')
   .replace(/\b(multiplied by|multiply by|multiply|times|into|cross|x)\b/g,' * ')
   .replace(/\b(divided by|divide by|divide|divided|over)\b/g,' / ')
@@ -309,7 +316,7 @@ function voiceParse(raw){
   .replace(/\b(open bracket|open parenthesis|left bracket|bracket open)\b/g,' ( ')
   .replace(/\b(close bracket|close parenthesis|right bracket|bracket close|closing bracket)\b/g,' ) ')
   .replace(/\b(percent|percentage|per cent)\b|%/g,' % ')
-  .replace(/\bpoint\b/g,' . ').replace(/\bgst\b/g,' gst ')+' ';
+  .replace(/\bby\b/g,' / ').replace(/\bpoint\b/g,' . ').replace(/\bgst\b/g,' gst ')+' ';
  let s=spoken(t).replace(/(\d)\s*\.\s*(\d)/g,'$1.$2');
  s=s.replace(/(\d+(?:\.\d+)?)\s*%\s*of\s*(\d+(?:\.\d+)?)/g,'( $2 * $1 / 100 )');
  let sign=1,rate=null;
@@ -335,8 +342,8 @@ function applyVoice(raw,live){
  expr=e;fresh=false;
  if(r.rate!==null){S.mode={s:r.sign,r:r.rate};gst=true;if(!live){save();pushH()}}else gst=false;
  render();if(!live)toast('\u201c'+raw+'\u201d')}
-let vOn=false,vLast='',vRc=null,vBase=null,vTimer=null,vBusy=false;
-const vOpts={language:'en-IN',maxResults:1,partialResults:true,popup:false};
+let vOn=false,vLast='',vRc=null,vBase=null,vTimer=null,vBusy=false,vAlts=[],vLastFinal='',vFinalAt=0;
+const vOpts={language:'en-IN',maxResults:5,partialResults:true,popup:false};
 const vCap=()=>window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.SpeechRecognition;
 function vBtn(on){const b=document.querySelector('[data-act="mic"]');if(b)b.classList.toggle('rec',on)}
 async function vKick(){if(!vOn||vBusy)return;const CP=vCap();if(!CP)return;vBusy=true;
@@ -352,15 +359,18 @@ async function voice(){
    const av=await CP.available();if(!av.available){toast('Voice input is not available on this phone');return}
    let p=await CP.checkPermissions();if(p.speechRecognition!=='granted'){p=await CP.requestPermissions();if(p.speechRecognition!=='granted'){toast('Microphone is blocked. Open phone Settings > Apps > Heman\u2019s Calc > Permissions and allow Microphone.',5000);return}}
    await CP.removeAllListeners();
-   await CP.addListener('partialResults',d=>{if(d&&d.matches&&d.matches[0]){vLast=d.matches[0];vStartUtt();applyVoice(vLast,true)}});
-   await CP.addListener('listeningState',d=>{if(d&&d.status==='stopped'){if(vLast){const t=vLast;vLast='';applyVoice(t);vBase=null}if(vOn)setTimeout(vKick,250)}});
+   await CP.addListener('partialResults',d=>{if(!d||!d.matches||!d.matches[0])return;const m=d.matches[0],nz=x=>x.toLowerCase().replace(/[^a-z0-9]/g,'');
+    if(vBase===null&&nz(m)===nz(vLastFinal)&&Date.now()-vFinalAt<1500)return;
+    if(vLast&&nz(m)!==nz(vLast)&&nz(vLast).startsWith(nz(m)))return;
+    vLast=m;vAlts=d.matches;vStartUtt();applyVoice(m,true)});
+   await CP.addListener('listeningState',d=>{if(d&&d.status==='stopped'){if(vLast){const t=pickBest([vLast,...vAlts.filter(x=>x!==vLast)]);vLast='';vAlts=[];applyVoice(t);vBase=null;vLastFinal=t;vFinalAt=Date.now()}if(vOn)setTimeout(vKick,250)}});
    vOn=true;vBusy=false;vBtn(true);toast('Listening\u2026 tap the mic again to stop',2500);
    clearInterval(vTimer);vTimer=setInterval(vKick,700);vKick()
   }else{
    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
    if(!SR){const nat=window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform();toast(nat?'Voice plug-in missing. Update package.json and android.yml in GitHub, then rebuild.':'Voice input is not supported in this browser',5000);return}
-   const rc=new SR();vRc=rc;rc.lang='en-IN';rc.continuous=true;rc.interimResults=true;
-   rc.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++){const q=e.results[i],tx=q[0].transcript;if(q.isFinal){applyVoice(tx);vBase=null}else{vStartUtt();applyVoice(tx,true)}}};
+   const rc=new SR();vRc=rc;rc.lang='en-IN';rc.continuous=true;rc.interimResults=true;rc.maxAlternatives=5;
+   rc.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++){const q=e.results[i],tx=pickBest(Array.from(q,a=>a.transcript));if(q.isFinal){applyVoice(tx);vBase=null}else{vStartUtt();applyVoice(tx,true)}}};
    rc.onerror=e=>{if(e.error==='no-speech'||e.error==='aborted')return;vOn=false;vBtn(false);toast(e.error==='not-allowed'?'Microphone is blocked. Allow it in phone Settings > Apps > Permissions.':'Voice error: '+e.error,4000)};
    rc.onend=()=>{if(vOn&&vRc===rc){setTimeout(()=>{if(vOn&&vRc===rc){try{rc.start()}catch(x){}}},200)}else vBtn(false)};
    vOn=true;vBtn(true);toast('Listening\u2026 tap the mic again to stop',2500);rc.start()}

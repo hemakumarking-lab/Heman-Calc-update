@@ -289,9 +289,9 @@ const UW={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,
 const SW={hundred:100,thousand:1e3,lakh:1e5,lakhs:1e5,lac:1e5,lacs:1e5,million:1e6,crore:1e7,crores:1e7,billion:1e9};
 const has=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 function spoken(t){const out=[];let act=false,tot=0,cur=0;const fl=()=>{if(act){out.push(String(tot+cur));act=false;tot=0;cur=0}};
- for(const w of t.split(/\s+/).filter(Boolean)){
+ const tk=t.split(/\s+/).filter(Boolean);for(let i=0;i<tk.length;i++){const w=tk[i];
   if(/^\d+(\.\d+)?$/.test(w)){if(act&&cur)fl();cur=parseFloat(w);act=true;continue}
-  if(has(UW,w)){act=true;cur+=UW[w];continue}
+  if(has(UW,w)){const u=UW[w];if(act&&u>=1&&u<=9&&cur>0&&cur%10!==0)fl();if(!act&&u>=1&&u<=9&&i+1<tk.length&&has(UW,tk[i+1])&&UW[tk[i+1]]>=10){act=true;cur=u*100;continue}act=true;cur+=u;continue}
   if(has(SW,w)){act=true;if(w==='hundred')cur=(cur||1)*100;else{tot+=(cur||1)*SW[w];cur=0}continue}
   fl();out.push(w)}
  fl();return out.join(' ')}
@@ -342,13 +342,13 @@ function applyVoice(raw,live){
  expr=e;fresh=false;
  if(r.rate!==null){S.mode={s:r.sign,r:r.rate};gst=true;if(!live){save();pushH()}}else gst=false;
  render();if(!live)toast('\u201c'+raw+'\u201d')}
-let vOn=false,vLast='',vRc=null,vBase=null,vTimer=null,vBusy=false,vAlts=[],vLastFinal='',vFinalAt=0;
+let vOn=false,vLast='',vRc=null,vBase=null,vTimer=null,vBusy=false,vAlts=[],vLastFinal='',vFinalAt=0,vNew=true,vTxt='',vAt=0,vFinalDone='';
 const vOpts={language:'en-IN',maxResults:5,partialResults:true,popup:false};
 const vCap=()=>window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.SpeechRecognition;
 function vBtn(on){const b=document.querySelector('[data-act="mic"]');if(b)b.classList.toggle('rec',on)}
 async function vKick(){if(!vOn||vBusy)return;const CP=vCap();if(!CP)return;vBusy=true;
  try{let l=false;try{const st=await CP.isListening();l=!!(st&&st.listening)}catch(e){}
-  if(vOn&&!l)await Promise.race([CP.start(vOpts),new Promise(r=>setTimeout(r,2000))])}catch(e){}
+  if(vOn&&!l){vNew=true;await Promise.race([CP.start(vOpts),new Promise(r=>setTimeout(r,2000))])}}catch(e){}
  vBusy=false}
 async function voiceStop(msg){const CP=vCap();vOn=false;clearInterval(vTimer);vBtn(false);vLast='';vBase=null;try{if(vRc){vRc.stop();vRc=null}}catch(e){}try{if(CP){await CP.stop();await CP.removeAllListeners()}}catch(e){}if(msg)toast(msg)}
 async function voice(){
@@ -359,12 +359,14 @@ async function voice(){
    const av=await CP.available();if(!av.available){toast('Voice input is not available on this phone');return}
    let p=await CP.checkPermissions();if(p.speechRecognition!=='granted'){p=await CP.requestPermissions();if(p.speechRecognition!=='granted'){toast('Microphone is blocked. Open phone Settings > Apps > Heman\u2019s Calc > Permissions and allow Microphone.',5000);return}}
    await CP.removeAllListeners();
-   await CP.addListener('partialResults',d=>{if(!d||!d.matches||!d.matches[0])return;const m=d.matches[0],nz=x=>x.toLowerCase().replace(/[^a-z0-9]/g,'');
-    if(vBase===null&&nz(m)===nz(vLastFinal)&&Date.now()-vFinalAt<1500)return;
-    if(vLast&&nz(m)!==nz(vLast)&&nz(vLast).startsWith(nz(m)))return;
-    vLast=m;vAlts=d.matches;vStartUtt();applyVoice(m,true)});
-   await CP.addListener('listeningState',d=>{if(d&&d.status==='stopped'){if(vLast){const t=pickBest([vLast,...vAlts.filter(x=>x!==vLast)]);vLast='';vAlts=[];applyVoice(t);vBase=null;vLastFinal=t;vFinalAt=Date.now()}if(vOn)setTimeout(vKick,250)}});
-   vOn=true;vBusy=false;vBtn(true);toast('Listening\u2026 tap the mic again to stop',2500);
+   await CP.addListener('partialResults',d=>{if(!d||!d.matches||!d.matches[0])return;const m=d.matches[0],nz=x=>x.toLowerCase().replace(/[^a-z0-9]/g,''),nm=nz(m),now=Date.now();
+    const a1=voiceParse(m).e,a0=vLast?voiceParse(vLast).e:'',ext=(nm.length>vTxt.length&&nm.startsWith(vTxt))||(a0&&a1&&a1.length>a0.length&&a1.startsWith(a0)),same=nm===vTxt||(a0&&a1&&a1===a0);
+    if(vNew&&vTxt&&((now-vAt<3500&&ext)||(now-vAt<1500&&same)))vNew=false;
+    if(vNew||vBase===null){vBase=expr;vBF=fresh;vNew=false;vLast='';vFinalDone=''}
+    if(vLast&&nm!==nz(vLast)&&nz(vLast).startsWith(nm))return;
+    vTxt=nm;vAt=now;vLast=m;vAlts=d.matches;applyVoice(m,true)});
+   await CP.addListener('listeningState',d=>{if(!d)return;if(d.status==='started')vNew=true;if(d.status==='stopped'){if(vLast&&vLast!==vFinalDone){const t=pickBest([vLast,...vAlts.filter(x=>x!==vLast)]);vFinalDone=vLast;applyVoice(t)}if(vOn)setTimeout(vKick,250)}});
+   vOn=true;vNew=true;vTxt='';vBusy=false;vBtn(true);toast('Listening\u2026 tap the mic again to stop',2500);
    clearInterval(vTimer);vTimer=setInterval(vKick,700);vKick()
   }else{
    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;

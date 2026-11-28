@@ -129,14 +129,14 @@ html{background:var(--bg)}
  <div id="sc"></div>
  <div id="keys"></div>
 </div>
-<div id="sci"><div class="bar"><span class="bt"><b>HEMAN_SIYA</b><i>CALCULATOR</i></span><button data-act="share" aria-label="Copy result"></button><button data-act="settings" aria-label="Settings"></button></div><div id="sd"><div id="sx"></div><div id="sr">0</div></div><div id="skeys"></div></div>
+<div id="sci"><div class="bar"><span class="bt"><b>HEMAN'S</b><i>CALCULATOR</i></span><button data-act="share" aria-label="Copy result"></button><button data-act="settings" aria-label="Settings"></button></div><div id="sd"><div id="sx"></div><div id="sr">0</div></div><div id="skeys"></div></div>
 <div id="tour" role="dialog" aria-label="Feature tour"></div>
 <div id="ov"><div class="sheet" id="sheet"></div></div>
 <div id="toast"></div>
 <script>
 const KS=['(',')','^','C','7','8','9','/','=','4','5','6','*','⌫','1','2','3','-','AC','0','00','.','+','%'];
 function defLayout(){const P={'(':[0,0],')':[1,0],'^':[2,0],'%':[3,0],'AC':[4,0],'7':[0,1],'8':[1,1],'9':[2,1],'+':[3,1],'⌫':[4,1],'4':[0,2],'5':[1,2],'6':[2,2],'-':[3,2],'=':[4,2],'1':[0,3],'2':[1,3],'3':[2,3],'/':[3,3],'0':[0,4],'00':[1,4],'.':[2,4],'*':[3,4],'C':[4,4]};const o={};KS.forEach(k=>{const[c,r]=P[k];o[k]={c,r,w:1,h:k==='='?2:1}});return o}
-const DEF={layout:defLayout(),formula:'',brand:'HEMAN_SIYA',haptic:true,pos:[3,5,18,40],neg:[3,5,18,40],prec:2,theme:'auto',cur:0,mode:{s:1,r:18}};
+const DEF={layout:defLayout(),formula:'',brand:'HEMAN'S',haptic:true,pos:[3,5,18,40],neg:[3,5,18,40],prec:2,theme:'auto',cur:0,mode:{s:1,r:18}};
 const CURS=['₹','$','€','£','—'];
 let S=load('gst:settings',DEF);S=Object.assign({},DEF,S);if(!S.layout||KS.some(k=>!S.layout[k]))S.layout=defLayout();
 let H=load('gst:history',[]);
@@ -175,7 +175,7 @@ function renderNow(){
  document.querySelectorAll('#sc button').forEach(b=>b.classList.toggle('on',gst&&!!S.mode&&+b.dataset.s===S.mode.s&&+b.dataset.r===S.mode.r));
  ['v1','v2','v3','v4','v5'].forEach(id=>{const e=$(id);if(e.offsetParent===null)return;const kk=e.textContent+'|'+e.clientWidth;if(e._k===kk)return;e._k=kk;e.style.fontSize='';const base=parseFloat(getComputedStyle(e).fontSize);let fs=base;for(const k of [1,.75,.55]){fs=Math.round(base*k);e.style.fontSize=fs+'px';if(e.scrollWidth<=e.clientWidth)break}e.scrollLeft=e.scrollWidth});
 }
-function applyBrand(){const n=(S.brand||'').trim()||'HEMAN_SIYA';document.querySelectorAll('.bar .bt b').forEach(b=>b.textContent=n)}
+function applyBrand(){const n=(S.brand||'').trim()||'HEMAN'S';document.querySelectorAll('.bar .bt b').forEach(b=>b.textContent=n)}
 function rateEdit(s,ix){const arr=s>0?S.pos:S.neg,old=arr[ix];
  open('<h2>Edit GST % ('+(s>0?'+':'\u2212')+')</h2><input id="rx" type="number" inputmode="decimal" step="0.1" min="0" max="100" value="'+old+'" aria-label="GST percentage"><div class="f"><button id="rc">Cancel</button><button class="p" id="ry">Save</button></div>');
  const inp=$('rx');setTimeout(()=>{inp.focus();inp.select()},50);$('rc').onclick=close;

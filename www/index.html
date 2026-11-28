@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#0277bd">
-<title>Heman’s Calc</title>
+<title>Smart GST Calc</title>
 <style>
 @font-face{font-family:'Poppins';font-weight:400;font-style:normal;font-display:swap;src:url(fonts/poppins-latin-400-normal.woff2) format('woff2')}
 @font-face{font-family:'Poppins';font-weight:500;font-style:normal;font-display:swap;src:url(fonts/poppins-latin-500-normal.woff2) format('woff2')}
@@ -64,9 +64,28 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .h b{white-space:nowrap}
 #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
 #toast.show{opacity:1}
+#tour{position:fixed;inset:0;z-index:30;background:var(--bg);color:var(--fg);display:none;flex-direction:column;box-sizing:border-box;padding:env(safe-area-inset-top,0px) 0 min(env(safe-area-inset-bottom,0px),12px)}
+#tour.show{display:flex}
+#tour .tt{flex:none;display:flex;justify-content:flex-end;padding:8px 12px}
+#tour .tt button{background:none;border:0;color:#0277bd;font:600 16px Poppins,system-ui,sans-serif;padding:10px 14px;cursor:pointer;border-radius:10px}
+#tour .tb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 28px;overflow:auto}
+#tour .ti{font-size:76px;line-height:1;margin-bottom:18px}
+#tour h2{margin:0 0 12px;font:600 24px Poppins,system-ui,sans-serif}
+#tour p{margin:0;font-size:16px;line-height:1.55;color:var(--sub);max-width:420px}
+#tour .tf{flex:none;display:flex;align-items:center;justify-content:space-between;padding:12px 18px 18px}
+#tour .tf button{border:0;font:600 16px Poppins,system-ui,sans-serif;padding:12px 22px;border-radius:12px;cursor:pointer;min-width:84px}
+#tour .tn{background:#0277bd;color:#fff}
+#tour .tp{background:none;color:#0277bd}
+#tour .td{display:flex;gap:7px}
+#tour .td i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+#tour .td i.on{background:#0277bd;width:20px;border-radius:4px}
+body{-webkit-font-smoothing:antialiased;-webkit-user-select:none;user-select:none}input{-webkit-user-select:text;user-select:text}
+#keys,#skeys,#sc,.row{contain:layout style}
 .rp{position:absolute;border-radius:50%;background:currentColor;opacity:.18;transform:scale(0);animation:rp .5s ease-out forwards;pointer-events:none}
 @keyframes rp{to{transform:scale(1);opacity:0}}
 button{-webkit-tap-highlight-color:transparent}
+.bar .bt b{text-transform:uppercase}
+html,body{overscroll-behavior:none;-webkit-text-size-adjust:100%}
 html{background:var(--bg)}
 #keys button,#skeys button,#sc button,.bar button{position:relative;overflow:hidden}
 .brand{flex:none;text-align:center;font:600 14px Outfit,Poppins,system-ui,sans-serif;letter-spacing:.32em;padding:8px 0 2px;color:var(--blue)}
@@ -82,12 +101,12 @@ html{background:var(--bg)}
 .bar svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #sci{display:none;position:fixed;inset:0;flex-direction:column;background:var(--bg);color:var(--fg);box-sizing:border-box;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) min(env(safe-area-inset-bottom,0px),12px) env(safe-area-inset-left,0px);z-index:1}
 @media (orientation:landscape) and (max-height:600px){#app{display:none}#sci{display:flex}}
-#sd{flex:none;height:30%;padding:4px 18px;text-align:right;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
+#sd{flex:none;height:24%;padding:4px 18px;text-align:right;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
 #sx{font-size:22px;color:var(--sub);white-space:nowrap;overflow-x:auto;scrollbar-width:none;min-height:30px}
 #sr{font-size:46px;font-weight:500;white-space:nowrap;overflow-x:auto;scrollbar-width:none;min-height:58px;line-height:1.25}
-#skeys{flex:1;display:grid;grid-template-columns:repeat(9,1fr);grid-template-rows:repeat(4,1fr);gap:5px;padding:6px 8px;background:var(--panel)}
-#skeys button{font-size:30px}
-#skeys button.fn{font-size:21px;color:var(--fg)}
+#skeys{flex:1;display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(5,1fr);gap:5px;padding:6px 8px;background:var(--panel)}
+#skeys button{font-size:26px}
+#skeys button.fn{font-size:17px;color:var(--fg)}
 #skeys button.on{background:var(--sel)}
 #skeys button.gap{margin-left:10px}
 </style>
@@ -111,12 +130,13 @@ html{background:var(--bg)}
  <div id="keys"></div>
 </div>
 <div id="sci"><div class="bar"><span class="bt"><b>HEMAN_SIYA</b><i>CALCULATOR</i></span><button data-act="share" aria-label="Copy result"></button><button data-act="settings" aria-label="Settings"></button></div><div id="sd"><div id="sx"></div><div id="sr">0</div></div><div id="skeys"></div></div>
+<div id="tour" role="dialog" aria-label="Feature tour"></div>
 <div id="ov"><div class="sheet" id="sheet"></div></div>
 <div id="toast"></div>
 <script>
 const KS=['(',')','^','C','7','8','9','/','=','4','5','6','*','⌫','1','2','3','-','AC','0','00','.','+','%'];
 function defLayout(){const P={'(':[0,0],')':[1,0],'^':[2,0],'%':[3,0],'AC':[4,0],'7':[0,1],'8':[1,1],'9':[2,1],'+':[3,1],'⌫':[4,1],'4':[0,2],'5':[1,2],'6':[2,2],'-':[3,2],'=':[4,2],'1':[0,3],'2':[1,3],'3':[2,3],'/':[3,3],'0':[0,4],'00':[1,4],'.':[2,4],'*':[3,4],'C':[4,4]};const o={};KS.forEach(k=>{const[c,r]=P[k];o[k]={c,r,w:1,h:k==='='?2:1}});return o}
-const DEF={layout:defLayout(),formula:'',haptic:true,pos:[3,5,18,40],neg:[3,5,18,40],prec:2,theme:'auto',cur:0,mode:{s:1,r:18}};
+const DEF={layout:defLayout(),formula:'',brand:'HEMAN_SIYA',haptic:true,pos:[3,5,18,40],neg:[3,5,18,40],prec:2,theme:'auto',cur:0,mode:{s:1,r:18}};
 const CURS=['₹','$','€','£','—'];
 let S=load('gst:settings',DEF);S=Object.assign({},DEF,S);if(!S.layout||KS.some(k=>!S.layout[k]))S.layout=defLayout();
 let H=load('gst:history',[]);
@@ -126,7 +146,8 @@ function save(){try{localStorage.setItem('gst:settings',JSON.stringify(S));local
 const $=id=>document.getElementById(id);
 function buzz(p){if(S.haptic&&navigator.vibrate){try{navigator.vibrate(p)}catch(e){}}}
 function toast(t,ms){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),ms||1400)}
-function ev(s){s=s.replace(/[+\-*/^.(]+$/,'');if(!s)return 0;const o=(s.match(/\(/g)||[]).length-(s.match(/\)/g)||[]).length;if(o<0)return NaN;s+=')'.repeat(o);if(!/^[0-9+\-*/^.() ]+$/.test(s))return NaN;s=s.replace(/\d+\.?\d*/g,m=>String(parseFloat(m))).replace(/(\d|\))\(/g,'$1*(').replace(/\)(\d)/g,')*$1').replace(/\^/g,'**').replace(/(^|[(+*/])-(\d+\.?\d*)\*\*/g,'$1(-$2)**');try{const v=Function('return ('+s+')')();return isFinite(v)?v:NaN}catch(e){return NaN}}
+function ev0(s){s=s.replace(/[+\-*/^.(]+$/,'');if(!s)return 0;const o=(s.match(/\(/g)||[]).length-(s.match(/\)/g)||[]).length;if(o<0)return NaN;s+=')'.repeat(o);if(!/^[0-9+\-*/^.() ]+$/.test(s))return NaN;s=s.replace(/\d+\.?\d*/g,m=>String(parseFloat(m))).replace(/(\d|\))\(/g,'$1*(').replace(/\)(\d)/g,')*$1').replace(/\^/g,'**').replace(/(^|[(+*/])-(\d+\.?\d*)\*\*/g,'$1(-$2)**');try{const v=Function('return ('+s+')')();return isFinite(v)?v:NaN}catch(e){return NaN}}
+const _evc=new Map();function ev(s){if(_evc.has(s))return _evc.get(s);const v=ev0(s);if(_evc.size>300)_evc.clear();_evc.set(s,v);return v}
 const f=n=>{if(Math.abs(n)>=1e15)return 'Too large';const t=n.toFixed(S.prec),r=t.includes('.')?t.replace(/\.?0+$/,''):t;return r==='-0'?'0':r};
 const pct=n=>(+n).toFixed(1)+'%';
 function calc(){
@@ -136,7 +157,8 @@ function calc(){
  if(m.s>0){tax=a*r;tot=a+tax}else{tot=a/(1+r);tax=-(a-tot)}
  return{a,tax,tot,r:m.r,s:m.s,tp:Math.abs(tax)};
 }
-function render(){
+let _rq=0;function render(){if(_rq)return;_rq=requestAnimationFrame(()=>{_rq=0;try{renderNow()}catch(e){console.error(e)}})}
+function renderNow(){
  shown=expr!=='';
  {const d=$('disp');d.textContent=expr?expr.replace(/\*/g,'×').replace(/\//g,'÷'):'0';d.style.whiteSpace='nowrap';let fs=44;d.style.fontSize=fs+'px';while(d.scrollWidth>d.clientWidth&&fs>26){fs-=2;d.style.fontSize=fs+'px'}if(d.scrollWidth>d.clientWidth){const txt=d.textContent,av=d.clientWidth-40,cx=document.createElement('canvas').getContext('2d');cx.font='500 '+fs+'px Poppins,system-ui,sans-serif';let ls=[],cur='';for(const ch of txt){if(cur&&cx.measureText(cur+ch).width>av){ls.push(cur);cur=''}cur+=ch}ls.push(cur);d.textContent='';d.style.whiteSpace='normal';const mk=s=>{const e=document.createElement('div');e.textContent=s;return e};const w=document.createElement('div');w.style.cssText='max-height:'+Math.round(fs*1.3*6)+'px;overflow-y:auto;scrollbar-width:none';ls.forEach(s=>w.appendChild(mk(s)));d.appendChild(w);w.scrollTop=w.scrollHeight}d.style.maxHeight='';d.style.overflowY='auto'}
  const c=calc(),sym=S.cur<4?CURS[S.cur]:'';
@@ -153,6 +175,7 @@ function render(){
  document.querySelectorAll('#sc button').forEach(b=>b.classList.toggle('on',gst&&!!S.mode&&+b.dataset.s===S.mode.s&&+b.dataset.r===S.mode.r));
  ['v1','v2','v3','v4','v5'].forEach(id=>{const e=$(id);if(e.offsetParent===null)return;const kk=e.textContent+'|'+e.clientWidth;if(e._k===kk)return;e._k=kk;e.style.fontSize='';const base=parseFloat(getComputedStyle(e).fontSize);let fs=base;for(const k of [1,.75,.55]){fs=Math.round(base*k);e.style.fontSize=fs+'px';if(e.scrollWidth<=e.clientWidth)break}e.scrollLeft=e.scrollWidth});
 }
+function applyBrand(){const n=(S.brand||'').trim()||'HEMAN_SIYA';document.querySelectorAll('.bar .bt b').forEach(b=>b.textContent=n)}
 function rateEdit(s,ix){const arr=s>0?S.pos:S.neg,old=arr[ix];
  open('<h2>Edit GST % ('+(s>0?'+':'\u2212')+')</h2><input id="rx" type="number" inputmode="decimal" step="0.1" min="0" max="100" value="'+old+'" aria-label="GST percentage"><div class="f"><button id="rc">Cancel</button><button class="p" id="ry">Save</button></div>');
  const inp=$('rx');setTimeout(()=>{inp.focus();inp.select()},50);$('rc').onclick=close;
@@ -190,7 +213,8 @@ function size(dw,dh){if(!sel){toast('Tap a key first');return}const L=S.layout[s
 function startEdit(x){edit=true;sel=x||null;const b=$('sc');b.innerHTML='';b.style.gridTemplateColumns='repeat(5,1fr)';
  [['◀',()=>step(-1,0),'Move left'],['▲',()=>step(0,-1),'Move up'],['▼',()=>step(0,1),'Move down'],['▶',()=>step(1,0),'Move right'],['Reset',()=>{S.layout=defLayout();save();buildKeys()},'Reset layout'],['W−',()=>size(-1,0),'Narrower'],['W+',()=>size(1,0),'Wider'],['H−',()=>size(0,-1),'Shorter'],['H+',()=>size(0,1),'Taller'],['Done',endEdit,'Done editing']].forEach(([t,fn,a])=>{const e=document.createElement('button');e.textContent=t;e.setAttribute('aria-label',a);e.style.fontSize='18px';e.onclick=fn;b.appendChild(e)});buildKeys()}
 function endEdit(){edit=false;sel=null;$('sc').style.gridTemplateColumns='';buildSC();render();buildKeys()}
-function press(x){
+function press(x){try{pressI(x)}catch(e){console.error(e);toast('Something went wrong. Press AC')}}
+function pressI(x){
  gst=false; if(x!=='='&&x!=='%')shown=false;
  if(/^[0-9]$|^00$/.test(x)){if(fresh){expr='';fresh=false}
   const seg=expr.split(/[+\-*/^()]/).pop();if(seg.replace('.','').length+x.length>15){buzz([25,40,25]);toast('Max 15 digits');return}if(seg==='0'&&x!=='.'){expr=expr.slice(0,-1)}expr+=x}
@@ -235,54 +259,76 @@ function settings(){
  '<h3>Negative GST shortcuts (%)</h3><div class="g">'+S.neg.map((v,i)=>inp('neg',i,v)).join('')+'</div>'+
  '<h3>Decimal precision</h3><select id="pr">'+[0,1,2,3,4].map(n=>'<option '+(n===S.prec?'selected':'')+'>'+n+'</option>').join('')+'</select>'+
  '<h3>Theme</h3><select id="th">'+[['auto','Match device'],['light','Light'],['dark','Dark']].map(([v,l])=>'<option value="'+v+'" '+(v===S.theme?'selected':'')+'>'+l+'</option>').join('')+'</select>'+
+ '<h3>Calculator name</h3><input id="nm" type="text" maxlength="24" placeholder="HEMAN_SIYA" value="'+(S.brand||'').replace(/"/g,'&quot;')+'">'+
  '<h3>Custom key C formula</h3><input id="fm" type="text" maxlength="60" placeholder="e.g. x*1.05+10" value="'+(S.formula||'')+'"><p style="margin:6px 0 0;font-size:13px;color:var(--ico)">x is the current amount. You can use + - * / ^ ( )</p>'+
  '<h3>Haptic feedback</h3><select id="hp"><option value="1" '+(S.haptic?'selected':'')+'>On</option><option value="0" '+(S.haptic?'':'selected')+'>Off</option></select>'+
+ '<h3>Help</h3><button class="pill" id="tr">Show feature tour</button>'+
  '<h3>Keypad</h3><button class="pill" id="el">Edit keypad layout</button>'+
  '<div class="f"><button id="rs">Restore defaults</button><button class="p" id="dn">Done</button></div>');
  document.querySelectorAll('#sheet input').forEach(i=>i.onchange=()=>{let v=parseFloat(i.value);if(isNaN(v)||v<0)v=DEF[i.dataset.k][+i.dataset.i];v=Math.min(v,100);i.value=v;S[i.dataset.k][+i.dataset.i]=v;S.mode=S.mode&&S.pos.concat(S.neg).includes(S.mode.r)?S.mode:null;save();buildSC();render()});
  $('pr').onchange=e=>{S.prec=+e.target.value;save();render()};
  $('th').onchange=e=>{S.theme=e.target.value;save();applyTheme()};
- $('rs').onclick=()=>{const cur=S.cur;S=JSON.parse(JSON.stringify(DEF));S.cur=cur;save();applyTheme();buildSC();buildKeys();render();settings();toast('Defaults restored')};
- $('fm').onchange=e=>{const v=e.target.value.trim();if(!/^[0-9xX+\-*/^().\s]*$/.test(v)){toast('Use only numbers, x and + - * / ^ ( )');e.target.value=S.formula||'';return}if(v&&isNaN(ev(v.replace(/[xX]/g,'(1)')))){toast('Formula is not valid');e.target.value=S.formula||'';return}S.formula=v;save();toast('Formula saved')};$('hp').onchange=e=>{S.haptic=e.target.value==='1';save();buzz(15)};$('dn').onclick=close;$('el').onclick=()=>{close();startEdit(null);toast('Tap a key, then move or resize it')};
+ $('rs').onclick=()=>{const cur=S.cur;S=JSON.parse(JSON.stringify(DEF));S.cur=cur;save();applyTheme();buildSC();buildKeys();applyBrand();render();settings();toast('Defaults restored')};
+ $('nm').oninput=e=>{S.brand=e.target.value.slice(0,24);applyBrand();save()};$('fm').onchange=e=>{const v=e.target.value.trim();if(!/^[0-9xX+\-*/^().\s]*$/.test(v)){toast('Use only numbers, x and + - * / ^ ( )');e.target.value=S.formula||'';return}if(v&&isNaN(ev(v.replace(/[xX]/g,'(1)')))){toast('Formula is not valid');e.target.value=S.formula||'';return}S.formula=v;save();toast('Formula saved')};$('tr').onclick=()=>{close();tourOpen()};$('hp').onchange=e=>{S.haptic=e.target.value==='1';save();buzz(15)};$('dn').onclick=close;$('el').onclick=()=>{close();startEdit(null);toast('Tap a key, then move or resize it')};
 }
 $('disp').ondblclick=settings;
 $('acts').addEventListener('pointerdown',e=>{if(e.target.closest('button'))buzz(8)});$('sc').addEventListener('pointerdown',e=>{if(e.target.closest('button'))buzz(10)});
 (function(){const b=document.createElement('button');b.id='gear';b.setAttribute('aria-label','Settings');
  b.innerHTML='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
  b.onclick=settings;$('acts').insertBefore(b,$('hist'))})();
-const SR=[['2nd','sin','cos','tan','7','8','9','/','AC'],['π','log','ln','√','4','5','6','*','⌫'],['e','x²','xʸ','x!','1','2','3','-','='],['(',')','1/x','DEG','0','00','.','+','%']];
-let sx='',sprev='',sfresh=false,sdeg=true,s2=false;const sb={};
-const sf={sin:x=>Math.sin(sdeg?x*Math.PI/180:x),cos:x=>Math.cos(sdeg?x*Math.PI/180:x),tan:x=>Math.tan(sdeg?x*Math.PI/180:x),asin:x=>{const r=Math.asin(x);return sdeg?r*180/Math.PI:r},acos:x=>{const r=Math.acos(x);return sdeg?r*180/Math.PI:r},atan:x=>{const r=Math.atan(x);return sdeg?r*180/Math.PI:r},log:Math.log10,ln:Math.log,sqrt:Math.sqrt,fact:n=>{if(n>170||n!==Math.floor(n))return NaN;let r=1;for(let i=2;i<=n;i++)r*=i;return r},PI:Math.PI,E:Math.E};
-const SIDS=['sin','cos','tan','asin','acos','atan','log','ln','sqrt','fact','PI','E'];
+const SR=[['2nd','hyp','DEG','rand','MC','7','8','9','/','AC'],['sin','cos','tan','MR','M+','4','5','6','*','\u232b'],['log','ln','\u221a','x\u00b2','M\u2212','1','2','3','-','='],['1/x','x!','|x|','mod','Ans','0','00','.','+','%'],['\u03c0','e','nCr','nPr','EXP','(',')','^','\u00b1','e\u02e3']];
+let sx='',sprev='',sfresh=false,sdeg=true,s2=false,shyp=false,sMem=0,sAns=0;const sb={};
+const rad=x=>sdeg?x*Math.PI/180:x,deg=r=>sdeg?r*180/Math.PI:r;
+const sf={sin:x=>Math.sin(rad(x)),cos:x=>Math.cos(rad(x)),tan:x=>Math.tan(rad(x)),asin:x=>deg(Math.asin(x)),acos:x=>deg(Math.acos(x)),atan:x=>deg(Math.atan(x)),sinh:Math.sinh,cosh:Math.cosh,tanh:Math.tanh,asinh:Math.asinh,acosh:Math.acosh,atanh:Math.atanh,log:Math.log10,ln:Math.log,sqrt:Math.sqrt,cbrt:Math.cbrt,abs:Math.abs,
+ fact:n=>{if(n<0||n>170||n!==Math.floor(n))return NaN;let r=1;for(let i=2;i<=n;i++)r*=i;return r},
+ ncr:(n,r)=>{if(r<0||r>n||n!==Math.floor(n)||r!==Math.floor(r)||n>1000)return NaN;r=Math.min(r,n-r);let v=1;for(let i=1;i<=r;i++)v=v*(n-r+i)/i;return Math.round(v)},
+ npr:(n,r)=>{if(r<0||r>n||n!==Math.floor(n)||r!==Math.floor(r)||n>170)return NaN;let v=1;for(let i=0;i<r;i++)v*=(n-i);return v},PI:Math.PI,E:Math.E};
+const SK=Object.keys(sf);
 function sev(s){if(!s)return NaN;s=s.replace(/[+\-*/^.]+$/,'');if(!s)return NaN;const o=(s.match(/\(/g)||[]).length-(s.match(/\)/g)||[]).length;if(o<0)return NaN;s+=')'.repeat(o);
- s=s.replace(/\d+\.?\d*/g,m=>String(parseFloat(m))).replace(/π/g,'PI').replace(/\be\b/g,'E').replace(/(\d+)!/g,'fact($1)').replace(/(\d+(?:\.\d+)?)%/g,'($1/100)').replace(/(\d|\)|PI|E)(?=PI|E\b|\(|sin|cos|tan|asin|acos|atan|log|ln|sqrt|fact)/g,'$1*').replace(/\^/g,'**');
- if((s.match(/[A-Za-z]+/g)||[]).some(i=>!SIDS.includes(i))||!/^[0-9+\-*/.(),A-Za-z ]*$/.test(s))return NaN;
- try{const r=Function('sin','cos','tan','asin','acos','atan','log','ln','sqrt','fact','PI','E','return ('+s+')')(sf.sin,sf.cos,sf.tan,sf.asin,sf.acos,sf.atan,sf.log,sf.ln,sf.sqrt,sf.fact,sf.PI,sf.E);return typeof r==='number'&&isFinite(r)?r:NaN}catch(e){return NaN}}
+ s=s.replace(/\d+\.?\d*/g,m=>String(parseFloat(m))).replace(/\u03c0/g,'PI').replace(/(?<![A-Za-z])e(?![A-Za-z])/g,'E').replace(/(\d+)!/g,'fact($1)').replace(/(\d+(?:\.\d+)?)nCr(\d+(?:\.\d+)?)/g,'ncr($1,$2)').replace(/(\d+(?:\.\d+)?)nPr(\d+(?:\.\d+)?)/g,'npr($1,$2)').replace(/(\d+(?:\.\d+)?)%/g,'($1/100)').replace(/mod/g,'%').replace(/(\d|\)|PI|E)(?=PI|E\b|\(|sinh|cosh|tanh|asinh|acosh|atanh|asin|acos|atan|sin|cos|tan|log|ln|sqrt|cbrt|abs|fact|ncr|npr)/g,'$1*').replace(/\^/g,'**').replace(/(^|[(+*/%])-\(/g,'$1(-1)*(').replace(/(^|[(+*/%])-(\d+\.?\d*)\*\*/g,'$1(-$2)**');
+ if((s.match(/[A-Za-z]+/g)||[]).some(i=>!SK.includes(i))||!/^[0-9+\-*/%.(),A-Za-z ]*$/.test(s))return NaN;
+ try{const r=Function(...SK,'return ('+s+')')(...SK.map(k=>sf[k]));return typeof r==='number'&&isFinite(r)?r:NaN}catch(e){return NaN}}
 function fmtS(v){const a=Math.abs(v);if(a<1e-12)return '0';if(a>=1e15||a<1e-6)return Number(v.toPrecision(10)).toExponential();return String(+v.toPrecision(12))}
-function srender(){const L={'/':'÷','*':'×','-':'−'};const x=$('sx');x.textContent=sfresh?sprev:sx.replace(/[\/*-]/g,c=>L[c]);x.scrollLeft=x.scrollWidth;const v=sev(sx),r=$('sr');r.textContent=isNaN(v)?(sx?'\u00a0':'0'):fmtS(v);r.scrollLeft=r.scrollWidth;
- FN3.forEach(k=>sb[k].textContent=s2?k+'⁻¹':k);sb['2nd'].classList.toggle('on',s2);sb['DEG'].textContent=sdeg?'DEG':'RAD'}
+const plain=v=>{const a=Math.abs(v);return (a===0||(a<1e15&&a>=1e-6))?String(+v.toPrecision(12)):'0'};
 const FN3=['sin','cos','tan'];
-function sp(k){const fr=()=>{if(sfresh){sx='';sfresh=false}};
+function srender(){const L={'/':'\u00f7','*':'\u00d7','-':'\u2212'};const x=$('sx');x.textContent=sfresh?sprev:sx.replace(/[\/*-]/g,c=>L[c]);x.scrollLeft=x.scrollWidth;const v=sev(sx),r=$('sr');r.textContent=isNaN(v)?(sx?'\u00a0':'0'):fmtS(v);r.scrollLeft=r.scrollWidth;
+ FN3.forEach(k=>sb[k].textContent=k+(shyp?'h':'')+(s2?'\u207b\u00b9':''));
+ sb['log'].textContent=s2?'10\u02e3':'log';sb['ln'].textContent=s2?'e\u02e3':'ln';sb['\u221a'].textContent=s2?'\u221b':'\u221a';sb['x\u00b2'].textContent=s2?'x\u00b3':'x\u00b2';
+ sb['2nd'].classList.toggle('on',s2);sb['hyp'].classList.toggle('on',shyp);sb['MR'].classList.toggle('on',sMem!==0);sb['DEG'].textContent=sdeg?'DEG':'RAD'}
+function sp(k){try{spI(k)}catch(e){console.error(e)}}
+function spI(k){const fr=()=>{if(sfresh){sx='';sfresh=false}};
  if(/^([0-9.]|00)$/.test(k)){fr();sx+=k}
- else if('+-*/'.includes(k)){sfresh=false;if(!sx&&k!=='-')return;sx+=k}
+ else if(k.length===1&&'+-*/'.includes(k)){sfresh=false;if(!sx&&k!=='-')return;sx+=k}
  else if(k==='2nd')s2=!s2;
- else if(FN3.includes(k)){fr();sx+=(s2?'a':'')+k+'('}
- else if(k==='log'||k==='ln'){fr();sx+=k+'('}
- else if(k==='√'){fr();sx+='sqrt('}
- else if(k==='π'||k==='e'||k==='('){fr();sx+=k}
+ else if(k==='hyp')shyp=!shyp;
+ else if(FN3.includes(k)){fr();sx+=(s2?'a':'')+k+(shyp?'h':'')+'('}
+ else if(k==='log'){fr();sx+=s2?'10^(':'log('}
+ else if(k==='ln'){fr();sx+=s2?'e^(':'ln('}
+ else if(k==='\u221a'){fr();sx+=s2?'cbrt(':'sqrt('}
+ else if(k==='|x|'){fr();sx+='abs('}
+ else if(k==='\u03c0'||k==='e'||k==='('){fr();sx+=k}
  else if(k===')'){sfresh=false;sx+=k}
- else if(k==='x²'){sfresh=false;sx+='^2'}
- else if(k==='xʸ'){sfresh=false;sx+='^'}
+ else if(k==='x\u00b2'){sfresh=false;sx+=s2?'^3':'^2'}
+ else if(k==='^'){sfresh=false;if(sx)sx+='^'}
+ else if(k==='e\u02e3'){fr();sx+='e^('}
  else if(k==='x!'){sfresh=false;sx+='!'}
+ else if(k==='mod'||k==='nCr'||k==='nPr'){sfresh=false;if(sx)sx+=k}
+ else if(k==='EXP'){sfresh=false;if(sx)sx+='*10^('}
+ else if(k==='\u00b1'){sfresh=false;if(!sx)sx='-';else if(/^-\(.*\)$/.test(sx))sx=sx.slice(2,-1);else sx='-('+sx+')'}
+ else if(k==='Ans'){fr();sx+=plain(sAns)}
+ else if(k==='rand'){fr();sx+=Math.random().toFixed(6)}
+ else if(k==='MC'){sMem=0;toast('Memory cleared')}
+ else if(k==='MR'){fr();sx+=plain(sMem)}
+ else if(k==='M+'||k==='M\u2212'){const v=sev(sx);if(isNaN(v)){toast('Nothing to store');return}sMem+=k==='M+'?v:-v;toast('M = '+fmtS(sMem))}
  else if(k==='1/x'){if(sx){sx='1/('+sx+')';sfresh=false}else sx='1/('}
  else if(k==='%'){sfresh=false;sx+='%'}
  else if(k==='DEG')sdeg=!sdeg;
  else if(k==='AC'){sx='';sprev='';sfresh=false}
- else if(k==='⌫'){if(sfresh){sx='';sfresh=false}else sx=sx.replace(/(asin|acos|atan|sin|cos|tan|log|ln|sqrt)\($|.$/,'')}
- else if(k==='='){const v=sev(sx);if(!isNaN(v)){sprev=sx.replace(/[\/*-]/g,c=>({'/':'÷','*':'×','-':'−'})[c])+' =';sx=fmtS(v);sfresh=true}}
+ else if(k==='\u232b'){if(sfresh){sx='';sfresh=false}else sx=sx.replace(/(asinh|acosh|atanh|asin|acos|atan|sinh|cosh|tanh|sin|cos|tan|log|ln|sqrt|cbrt|abs|10\^|e\^|\*10\^)\($|nCr$|nPr$|mod$|.$/,'')}
+ else if(k==='='){const v=sev(sx);if(!isNaN(v)){sprev=sx.replace(/[\/*-]/g,c=>({'/':'\u00f7','*':'\u00d7','-':'\u2212'})[c])+' =';sAns=v;sx=fmtS(v);sfresh=true}}
  srender()}
-(function(){const g=$('skeys');SR.forEach(row=>row.forEach((k,i)=>{const b=document.createElement('button');b.textContent={'/':'÷','*':'×','-':'−'}[k]||k;b.setAttribute('aria-label',k);
- if('=⌫AC%'.includes(k)&&k!==''&&['=','⌫','AC','%'].includes(k))b.classList.add('o');if(k==='AC')b.classList.add('red');if(k==='=')b.classList.add('blue');if(k==='%')b.classList.remove('o');if('()/*-+%'.includes(k))b.classList.add('sym');if(i<4)b.classList.add('fn');if(i===4)b.classList.add('gap');
+(function(){const g=$('skeys');SR.forEach(row=>row.forEach((k,i)=>{const b=document.createElement('button');b.textContent={'/':'\u00f7','*':'\u00d7','-':'\u2212'}[k]||k;b.setAttribute('aria-label',k);
+ if(['=','\u232b','AC'].includes(k))b.classList.add('o');if(k==='AC')b.classList.add('red');if(k==='=')b.classList.add('blue');if(k.length===1&&'()/*-+%^'.includes(k))b.classList.add('sym');if(i<5||k==='\u00b1'||k==='e\u02e3')b.classList.add('fn');if(i===5)b.classList.add('gap');
  b.onpointerdown=()=>{buzz(k==='='?18:8);sp(k)};b.onclick=e=>{if(e.detail===0)sp(k)};b.oncontextmenu=e=>e.preventDefault();sb[k]=b;g.appendChild(b)}))})();
 srender();
 const UW={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
@@ -357,7 +403,7 @@ async function voice(){
  try{
   if(CP){
    const av=await CP.available();if(!av.available){toast('Voice input is not available on this phone');return}
-   let p=await CP.checkPermissions();if(p.speechRecognition!=='granted'){p=await CP.requestPermissions();if(p.speechRecognition!=='granted'){toast('Microphone is blocked. Open phone Settings > Apps > Heman\u2019s Calc > Permissions and allow Microphone.',5000);return}}
+   let p=await CP.checkPermissions();if(p.speechRecognition!=='granted'){p=await CP.requestPermissions();if(p.speechRecognition!=='granted'){toast('Microphone is blocked. Open phone Settings > Apps > Smart GST Calc > Permissions and allow Microphone.',5000);return}}
    await CP.removeAllListeners();
    await CP.addListener('partialResults',d=>{if(!d||!d.matches||!d.matches[0])return;const m=d.matches[0],nz=x=>x.toLowerCase().replace(/[^a-z0-9]/g,''),nm=nz(m),now=Date.now();
     const a1=voiceParse(m).e,a0=vLast?voiceParse(vLast).e:'',ext=(nm.length>vTxt.length&&nm.startsWith(vTxt))||(a0&&a1&&a1.length>a0.length&&a1.startsWith(a0)),same=nm===vTxt||(a0&&a1&&a1===a0);
@@ -383,10 +429,25 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(
  if(a==='settings')settings();
  else if(a==='share'){if(land)copyT($('sr').textContent.trim(),'Result copied');else $('share').click()}
  else if(a==='history')$('hist').click();else if(a==='mic')voice()});
-(async()=>{try{await new Promise(r=>setTimeout(r,900));const CP=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.SpeechRecognition;if(!CP)return;let asked='';try{asked=localStorage.getItem('gst:micAsked')}catch(e){}if(asked)return;try{localStorage.setItem('gst:micAsked','1')}catch(e){}const p=await CP.checkPermissions();if(p.speechRecognition!=='granted')await CP.requestPermissions()}catch(e){}})();
+const TOUR=[['\ud83e\uddee','Welcome to Smart GST Calc','A quick look at what it can do. You can skip this any time.'],
+['\ud83e\uddfe','GST in one tap','Type an amount, then tap +18% to add GST or \u221218% to take it out. You get CGST, SGST, IGST, Tax and Total. Long press a shortcut to change its rate.'],
+['\u2699\ufe0f','Smart keypad','Brackets, power (^) and % are built in. The green C key runs your own formula. Long press C to set it, for example x*1.05+10.'],
+['\ud83c\udfa4','Voice input','Tap the mic and speak, like 1000 plus 18 percent GST. It keeps listening and shows the result as you talk. Tap the mic again to stop.'],
+['\ud83c\udfa8','Make it yours','In Settings you can change the name at the top, the theme, decimals and vibration. Long press any other key to move or resize it.'],
+['\ud83d\udd2c','Scientific calculator','Turn your phone sideways for sin, cos, log, powers, memory and more. History and Share are in the top bar.']];
+let tourI=0,tourRes=null,tourP=Promise.resolve();
+function tourDraw(){const t=$('tour'),s=TOUR[tourI],last=tourI===TOUR.length-1;
+ t.innerHTML='<div class="tt"><button id="tk">Skip</button></div><div class="tb"><div class="ti">'+s[0]+'</div><h2>'+s[1]+'</h2><p>'+s[2]+'</p></div><div class="tf"><button class="tp" id="tpv" style="visibility:'+(tourI?'visible':'hidden')+'">Back</button><div class="td">'+TOUR.map((_,i)=>'<i class="'+(i===tourI?'on':'')+'"></i>').join('')+'</div><button class="tn" id="tnx">'+(last?'Get started':'Next')+'</button></div>';
+ $('tk').onclick=tourClose;$('tnx').onclick=()=>{if(last)tourClose();else{tourI++;tourDraw()}};$('tpv').onclick=()=>{if(tourI>0){tourI--;tourDraw()}}}
+function tourClose(){$('tour').classList.remove('show');try{localStorage.setItem('gst:tour','1')}catch(e){}if(tourRes){tourRes();tourRes=null}}
+function tourOpen(){tourI=0;tourDraw();$('tour').classList.add('show');tourP=new Promise(r=>{tourRes=r})}
+(function(){const t=$('tour');let x0=null;t.addEventListener('touchstart',e=>{x0=e.touches[0].clientX},{passive:true});t.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)<60)return;if(dx<0&&tourI<TOUR.length-1){tourI++;tourDraw()}else if(dx>0&&tourI>0){tourI--;tourDraw()}},{passive:true})})();
+(function(){let seen='';try{seen=localStorage.getItem('gst:tour')}catch(e){}if(!seen)tourOpen()})();
+(async()=>{try{await new Promise(r=>setTimeout(r,900));await tourP;const CP=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.SpeechRecognition;if(!CP)return;let asked='';try{asked=localStorage.getItem('gst:micAsked')}catch(e){}if(asked)return;try{localStorage.setItem('gst:micAsked','1')}catch(e){}const p=await CP.checkPermissions();if(p.speechRecognition!=='granted')await CP.requestPermissions()}catch(e){}})();
 document.addEventListener('pointerdown',e=>{const b=e.target.closest('#keys button,#skeys button,#sc button,.bar button');if(!b||b.classList.contains('empty'))return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height)*2.2,sp=document.createElement('span');sp.className='rp';sp.style.cssText='width:'+d+'px;height:'+d+'px;left:'+(e.clientX-r.left-d/2)+'px;top:'+(e.clientY-r.top-d/2)+'px';b.appendChild(sp);setTimeout(()=>sp.remove(),500)},{passive:true});
 window.addEventListener('resize',()=>render());
-applyTheme();buildSC();render();
+applyTheme();buildSC();applyBrand();render();
+let _eT=0;window.addEventListener('error',()=>{const n=Date.now();if(n-_eT>6000){_eT=n;try{toast('Something went wrong, but the app is still running')}catch(x){}}});window.addEventListener('unhandledrejection',e=>{if(e.preventDefault)e.preventDefault()});
 </script>
 </body>
 </html>
